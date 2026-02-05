@@ -12,6 +12,7 @@
 				".",
 				"debug"
 			],
+			"preLaunchTask": "Build Resources"
 		},
 		{
 			"type": "lua-local",
@@ -23,6 +24,7 @@
 			"args": [
 				".",
 			],
+			"preLaunchTask": "Build Resources"
 		},
 	]
 }

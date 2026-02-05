@@ -15,22 +15,22 @@ function love.conf(t)
 	t.console               = false
 	t.accelerometerjoystick = false
 	t.externalstorage       = false
-	t.gammacorrect          = false
 	t.highdpi			    = false
 
 	t.audio.mic             = false
 	t.audio.mixwithsystem   = true
 
-	t.window.title          = "Untitled"
+	t.window.title          = "trijam 358"
 	t.window.icon           = nil
 	t.window.width          = 800
 	t.window.height         = 600
 	t.window.borderless     = false
-	t.window.resizable      = false
+	t.window.resizable      = true
 	t.window.minwidth       = 1
 	t.window.minheight      = 1
 	t.window.fullscreen     = false
 	t.window.fullscreentype = "desktop"
+	t.window.gammacorrect   = false
 	t.window.vsync          = 1
 	t.window.msaa           = 0
 	t.window.depth          = nil

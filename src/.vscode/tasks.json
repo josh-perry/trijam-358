@@ -1,0 +1,11 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build Resources",
+			"type": "shell",
+			"command": "aseprite-sheet-combiner ../resources/*.aseprite -i assets/img/spritesheet.png -d assets/animations/",
+			"problemMatcher": []
+		}
+	]
+}
