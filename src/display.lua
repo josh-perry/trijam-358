@@ -1,7 +1,7 @@
 local display = {}
 
-display.width = 240
-display.height = 320
+display.width = 320
+display.height = 240
 display.canvas = love.graphics.newCanvas(display.width, display.height)
 
 function display:calculateScale()
