@@ -19,15 +19,25 @@ function Enemy:new(position)
 
     self.aiState = state_machine({
         walk = {
+            enter = function(s)
+                s.shootTimer = 1.5
+            end,
             update = function(s, dt)
                 self.sprite:setTag("WalkDown")
                 self.speed = 30
+
+                s.shootTimer = s.shootTimer - dt
+
+                if s.shootTimer <= 0 then
+                    return "shoot"
+                end
             end
         },
         hurt = {
             enter = function(s)
                 s.timer = 0.5
                 self.sprite:setTag("Hurt")
+                assets.playSfx("enemyHit")
                 self.speed = 0
             end,
             update = function(s, dt)
@@ -37,18 +47,49 @@ function Enemy:new(position)
                     return "walk"
                 end
             end
+        },
+        dead = {
+            enter = function(s)
+                self.sprite:setTag("Death")
+                self.speed = 0
+                s.timer = 0.6
+            end,
+            update = function(s, dt)
+                s.timer = s.timer - dt
+
+                if s.timer <= 0 then
+                    pubsub:publish("ENEMY_DEATH", self)
+                    self.dead = true
+                end
+            end
+        },
+        shoot = {
+            enter = function(s)
+                self.sprite:setTag("Shooting")
+                s.timer = 0.5
+            end,
+            update = function(s, dt)
+                s.timer = s.timer - dt
+
+                if not s.hasShot and s.timer <= 0 then
+                    pubsub:publish("ENEMY_SHOOT", self)
+                    assets.playSfx("enemyShoot")
+                    return "walk"
+                end
+            end
         }
     }, "walk")
 end
 
 function Enemy:draw()
-    self.sprite:draw(self.position.x, self.position.y)
+    if self.dead then return end
+    self.sprite:draw(math.round(self.position.x), math.round(self.position.y))
 end
 
 function Enemy:update(dt)
-    self.aiState:update(dt)
-
     self.sprite:update(dt)
+
+    self.aiState:update(dt)
 
     self.position:vector_add_inplace(self.velocity * dt)
 
@@ -61,7 +102,7 @@ function Enemy:hurt(damage)
     self.aiState:set_state("hurt")
 
     if self.health <= 0 then
-        pubsub:publish("ENEMY_DEATH", self)
+        self.aiState:set_state("dead")
     end
 end
 

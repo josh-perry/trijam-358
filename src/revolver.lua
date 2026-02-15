@@ -13,6 +13,8 @@ local bulletSprites = {
     damage = peachy.new("assets/animations/damage_bullet_revolver.json", assets.spritesheet, "Idle"),
     ricochet = peachy.new("assets/animations/ricochet_bullet_revolver.json", assets.spritesheet, "Idle"),
     empty = peachy.new("assets/animations/empty_bullet_revolver.json", assets.spritesheet, "Idle"),
+    triple = peachy.new("assets/animations/triple_bullet_revolver.json", assets.spritesheet, "Idle"),
+    homing = peachy.new("assets/animations/homing_bullet_revolver.json", assets.spritesheet, "Idle"),
 }
 
 function Revolver:new(player)
@@ -24,36 +26,45 @@ function Revolver:new(player)
     self.sprite = peachy.new("assets/animations/revolver.json", assets.spritesheet, "Idle")
     self.bullets = {
         {
-            type = "ricochet",
-            enhanced = false
-        },
-        {
-            type = "damage",
-            enhanced = false
-        },
-        {
-            type = "damage",
-            enhanced = false
-        },
-        {
-            type = "damage",
-            enhanced = false
-        },
-        {
-            type = "damage",
+            type = "homing",
             enhanced = false
         },
         {
             type = "ricochet",
+            enhanced = false
+        },
+        {
+            type = "ricochet",
+            enhanced = false
+        },
+        {
+            type = "triple",
+            enhanced = false
+        },
+        {
+            type = "triple",
+            enhanced = false
+        },
+        {
+            type = "empty",
             enhanced = false
         }
     }
-    
+
     pubsub:subscribe("PLAYER_SHOOT", function(bullet)
         local step = (math.pi * 2 / self.maxBullets)
         local targetRotation = self.rotation - step
         flux.to(self, 0.2, {rotation = targetRotation}):ease("quadout")
     end)
+
+    pubsub:subscribe("PLAYER_SHOOT_EMPTY", function()
+        -- local originalRotation = self.rotation
+        -- local step = (math.pi * 2 / self.maxBullets)
+        -- local targetRotation = self.rotation - step
+        -- flux.to(self, 0.2, {rotation = targetRotation}):ease("elasticinout")
+    end)
+
+    self:updateEnhanced()
 end
 
 function Revolver:draw()
@@ -85,7 +96,7 @@ end
 function Revolver:update(dt)
     self.sprite:update(dt)
 
-    for i, v in pairs(bulletSprites) do
+    for _, v in pairs(bulletSprites) do
         v:update(dt)
     end
 end
@@ -102,10 +113,59 @@ end
 
 function Revolver:removeFirstBullet()
     self.bullets[self.currentBulletIndex] = {
-        type = "empty"
+        type = "empty",
+        enhanced = false
     }
 
     self.currentBulletIndex = self.currentBulletIndex % self.maxBullets + 1
+end
+
+function Revolver:addBullet(bullet)
+    for i = self.currentBulletIndex, self.currentBulletIndex + self.maxBullets do
+        local index = ((i - 1) % self.maxBullets) + 1
+
+        if self.bullets[index].type == "empty" then
+            self.bullets[index] = {
+                type = bullet.type,
+                enhanced = bullet.enhanced
+            }
+
+            self:updateEnhanced()
+            break
+        end
+    end
+end
+
+function Revolver:updateEnhanced()
+    local enhanced = false
+    -- if theres 3 of the same type, enhance all
+    for i = 1, self.maxBullets do
+        local v = self.bullets[i]
+
+        if v.type ~= "empty" then
+            local count = functional.count(self.bullets, function(b)
+                return b.type == v.type
+            end)
+
+            if count >= 3 then
+                for j = 1, self.maxBullets do
+                    if self.bullets[j].type == v.type then
+                        self.bullets[j].enhanced = true
+                        bulletSprites[v.type]:setTag("Enhanced")
+                    end
+                end
+
+                enhanced = true
+            else
+                bulletSprites[v.type]:setTag("Idle")
+            end
+        end
+    end
+
+    if enhanced then
+        assets.playSfx("bulletsEnhanced")
+    else
+    end
 end
 
 return Revolver
